@@ -87024,9 +87024,9 @@ dictionary <dfn dictionary>CommandEventInit</dfn> : <span>EventInit</span> {
   boundaries: <span>sequentially focusable</span> elements that have been opted out with <code
   data-x="attr-focusgroup-none">focusgroup="none"</code>, nested <span data-x="focusgroup
   scope">focusgroup scopes</span> that contain at least one <span>focusgroup item</span>, and
-  subtrees rooted at elements in the document's <span>top layer</span> that are <span
-  data-x="shadow-including descendant">shadow-including descendants</span> of the
-  <span>focusgroup owner</span>.</p>
+  subtrees rooted at <span>sequentially focusable</span> elements in the document's <span>top
+  layer</span> that are <span data-x="shadow-including descendant">shadow-including
+  descendants</span> of the <span>focusgroup owner</span>.</p>
 
   <div class="example">
 
