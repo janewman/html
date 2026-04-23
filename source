@@ -87006,8 +87006,12 @@ dictionary <dfn dictionary>CommandEventInit</dfn> : <span>EventInit</span> {
   <p>The <dfn>focusgroup scope</dfn> of a <span>focusgroup owner</span> is all of its <span
   data-x="shadow-including descendant">shadow-including descendants</span>, excluding any
   descendants that are themselves a <span>focusgroup owner</span>, are in a different <span
-  data-x="focusgroup scope">focusgroup scope</span>, or have opted out with <code
-  data-x="attr-focusgroup-none">focusgroup="none"</code>.</p>
+  data-x="focusgroup scope">focusgroup scope</span>, have opted out with <code
+  data-x="attr-focusgroup-none">focusgroup="none"</code>, are in the document's <span>top
+  layer</span>, or are <span data-x="shadow-including descendant">shadow-including
+  descendants</span> of an element that is both in the document's <span>top layer</span>
+  and is itself a <span data-x="shadow-including descendant">shadow-including
+  descendant</span> of the <span>focusgroup owner</span>.</p>
 
   <p>The <dfn data-x="focusgroup owner of">focusgroup owner of</dfn> an element is the
   nearest <span data-x="concept-shadow-including-ancestor">shadow-including
@@ -87018,8 +87022,11 @@ dictionary <dfn dictionary>CommandEventInit</dfn> : <span>EventInit</span> {
   item">focusgroup items</span> within a <span data-x="focusgroup scope">focusgroup scope</span>
   that can be navigated without crossing any segment boundary. The following create segment
   boundaries: <span>sequentially focusable</span> elements that have been opted out with <code
-  data-x="attr-focusgroup-none">focusgroup="none"</code> and nested <span data-x="focusgroup
-  scope">focusgroup scopes</span> that contain at least one <span>focusgroup item</span>.</p>
+  data-x="attr-focusgroup-none">focusgroup="none"</code>, nested <span data-x="focusgroup
+  scope">focusgroup scopes</span> that contain at least one <span>focusgroup item</span>, and
+  subtrees rooted at elements in the document's <span>top layer</span> that are <span
+  data-x="shadow-including descendant">shadow-including descendants</span> of the
+  <span>focusgroup owner</span>.</p>
 
   <div class="example">
 
@@ -87084,6 +87091,93 @@ dictionary <dfn dictionary>CommandEventInit</dfn> : <span>EventInit</span> {
   data-x="">reading-flow</code> property is applied to a focusgroup's container, arrow key
   presses move focus in the expected visual direction established by the reading flow, and the
   direction of an arrow key is determined by the visual position of items in that order.</p>
+
+  <h5 id="focusgroup-top-layer-interaction">Top layer interaction</h5>
+
+  <p>Elements in the document's <span>top layer</span> — such as popovers shown via <code
+  data-x="dom-showPopover">showPopover()</code>, modal <code>dialog</code> elements,
+  and fullscreen elements — are excluded from any ancestor <span>focusgroup scope</span> while
+  they remain in the <span>top layer</span>. This exclusion has the same effect as <code
+  data-x="attr-focusgroup-none">focusgroup="none"</code> for the purpose of ancestor focusgroup
+  participation: the element and its <span data-x="shadow-including descendant">shadow-including
+  descendants</span> do not appear as <span data-x="focusgroup item">focusgroup items</span> in
+  the ancestor's scope, <span>Directional Navigation</span> in the ancestor focusgroup skips the
+  excluded subtree, and the subtree creates a <span data-x="focusgroup segment">segment
+  boundary</span> for <span>sequential focus navigation</span>.</p>
+
+  <p>When an element leaves the <span>top layer</span> (for example, when a popover is hidden),
+  the element and its descendants participate in the ancestor <span>focusgroup scope</span> again
+  under the normal rules.</p>
+
+  <p>If the ancestor focusgroup's <span>last focused item</span> is within a subtree rooted at
+  an element that enters the <span>top layer</span>, then the <span>last focused item</span> is
+  preserved but temporarily ineligible. The <span data-x="entry element of a focusgroup
+  segment">entry element</span> algorithm proceeds to the next priority: an element with
+  the <code data-x="attr-focusgroupstart">focusgroupstart</code> attribute, or the first
+  <span>sequentially focusable</span> <span>focusgroup item</span> in the segment. If the
+  subtree later leaves the <span>top layer</span>, then the <span>last focused item</span> becomes
+  eligible again.</p>
+
+  <p>A <code data-x="attr-focusgroup">focusgroup</code> attribute on the top-layer element itself
+  continues to operate normally. Only participation in ancestor focusgroups changes.</p>
+
+  <p class="note">Authors <!--non-normative-->should provide a keyboard path into a shown
+  popover, since its subtree
+  no longer participates in the ancestor focusgroup's arrow-key traversal. The appropriate
+  mechanism depends on the widget pattern — for example, a menu button opens its menu on
+  <kbd>Enter</kbd>, <kbd>Space</kbd>, or <kbd>Down Arrow</kbd> and focuses the first item.</p>
+
+  <div class="example">
+
+   <p>In this example, a toolbar contains a popover. When the popover is hidden, arrow keys in
+   the toolbar move among the four buttons. When the popover is shown and enters the <span>top
+   layer</span>, its subtree is excluded from the toolbar's <span>focusgroup scope</span>:</p>
+
+   <pre><code class="html">&lt;div focusgroup="toolbar wrap" aria-label="Text formatting"&gt;
+  &lt;button type="button" aria-haspopup="true" aria-expanded="false"
+          aria-controls="color-picker" commandfor="color-picker"
+          command="show-popover"&gt;Text color&lt;/button&gt;
+  &lt;button type="button"&gt;Bold&lt;/button&gt;
+  &lt;button type="button"&gt;Italic&lt;/button&gt;
+  &lt;div id="color-picker" popover&gt;
+    &lt;button type="button"&gt;Red&lt;/button&gt;
+    &lt;button type="button"&gt;Green&lt;/button&gt;
+    &lt;button type="button"&gt;Blue&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;button type="button"&gt;Underline&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+
+   <p>Arrow keys in the toolbar skip the popover's buttons. <kbd>Tab</kbd> from a toolbar button
+   can reach the popover's buttons via <span>sequential focus navigation</span>, since the
+   excluded subtree creates a segment boundary.</p>
+
+  </div>
+
+  <div class="example">
+
+   <p>If the popover defines its own <code data-x="attr-focusgroup">focusgroup</code>, that inner
+   focusgroup operates independently:</p>
+
+   <pre><code class="html">&lt;div focusgroup="toolbar wrap" aria-label="Text formatting"&gt;
+  &lt;button type="button" aria-haspopup="true" aria-expanded="false"
+          aria-controls="color-picker" commandfor="color-picker"
+          command="show-popover"&gt;Text color&lt;/button&gt;
+  &lt;button type="button"&gt;Bold&lt;/button&gt;
+  &lt;div id="color-picker" popover focusgroup="radiogroup"
+       aria-label="Color palette"&gt;
+    &lt;button type="button" role="radio" aria-checked="true"&gt;Red&lt;/button&gt;
+    &lt;button type="button" role="radio" aria-checked="false"&gt;Green&lt;/button&gt;
+    &lt;button type="button" role="radio" aria-checked="false"&gt;Blue&lt;/button&gt;
+  &lt;/div&gt;
+  &lt;button type="button"&gt;Underline&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+
+   <p>The popover's subtree is excluded from the parent toolbar's focusgroup when shown. Once
+   focus moves into the popover, its own <code
+   data-x="attr-focusgroup-radiogroup">radiogroup</code> focusgroup provides independent arrow
+   key navigation among the color choices.</p>
+
+  </div>
 
   <h5 id="focusgroup-aria-role-inference">ARIA Role Inference</h5>
 
@@ -87232,9 +87326,13 @@ dictionary <dfn dictionary>CommandEventInit</dfn> : <span>EventInit</span> {
     <li><p>Let <var>owner</var> be the <span>focusgroup owner</span> of <var>segment</var>.</p></li>
 
     <li><p>If <var>owner</var> has a <dfn>last focused item</dfn>, <var>owner</var> does not have
-    the <code data-x="attr-focusgroup-nomemory">nomemory</code> token, and the <span
-    data-x="last focused item">last focused item</span> is within <var>segment</var>, then return
-    the <span data-x="last focused item">last focused item</span>.</p></li>
+    the <code data-x="attr-focusgroup-nomemory">nomemory</code> token, the <span
+    data-x="last focused item">last focused item</span> is within <var>segment</var>, and the
+    <span data-x="last focused item">last focused item</span> is not in the document's
+    <span>top layer</span> and does not have a <span
+    data-x="concept-shadow-including-ancestor">shadow-including ancestor</span> that is in the
+    document's <span>top layer</span>, then return the <span data-x="last focused item">last
+    focused item</span>.</p></li>
 
     <li><p>If any <span>focusgroup item</span> in <var>segment</var> has the <code
     data-x="attr-focusgroupstart">focusgroupstart</code> attribute, then return the first
@@ -87272,9 +87370,15 @@ dictionary <dfn dictionary>CommandEventInit</dfn> : <span>EventInit</span> {
    <li><p>The <span>last focused item</span> is no longer within the <span>focusgroup
    scope</span> of its <span>focusgroup owner</span> (for example, because <code
    data-x="attr-focusgroup-none">focusgroup="none"</code> is added to it or a
-   <span data-x="concept-shadow-including-ancestor">shadow-including ancestor</span>, or a new <code
-   data-x="attr-focusgroup">focusgroup</code> attribute is added to it or a
-   <span data-x="concept-shadow-including-ancestor">shadow-including ancestor</span>).</p></li>
+   <span data-x="concept-shadow-including-ancestor">shadow-including ancestor</span>, or a new
+   <code data-x="attr-focusgroup">focusgroup</code> attribute is added to it or a
+   <span data-x="concept-shadow-including-ancestor">shadow-including ancestor</span>), unless
+   the <span>last focused item</span> is no longer within the scope solely because it, or a
+   <span data-x="concept-shadow-including-ancestor">shadow-including ancestor</span>, is in
+   the document's <span>top layer</span> (in which case the <span>last focused item</span>
+   is preserved but temporarily ineligible, as described in the <a
+   href="#focusgroup-top-layer-interaction">top layer interaction</a>
+   section).</p></li>
   </ul>
 
   <div class="example">
